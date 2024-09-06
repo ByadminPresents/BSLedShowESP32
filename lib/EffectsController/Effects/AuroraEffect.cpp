@@ -7,15 +7,6 @@ AuroraEffect::AuroraEffect(CRGB *leds, uint16_t ledsCount, uint32_t *params) : v
     maxCountOfNodes = params[0];
 }
 
-void AuroraEffect::PreIterate(int preIterationsCount)
-{
-    preIterationsLeft = preIterationsCount;
-    while(preIterationsLeft > 0)
-    {
-        AuroraEffect::Iterate();
-    }
-}
-
 bool AuroraEffect::Iterate()
 {
     if (!isVectorsAllocated)
@@ -46,12 +37,6 @@ bool AuroraEffect::Iterate()
             currentCountOfNodes++;
         }
     }
-
-    // if (preIterationsLeft > 0)
-    // {
-    //     preIterationsLeft--;
-    //     return true;
-    // }
 
     for (int i = 0; i < ledsCount; i++)
     {
@@ -261,9 +246,9 @@ DoubleCRGB AuroraEffect::AuroraNode::GetColor(int index)
         index = valuesCount + index;
     }
 
-    color.r = doubleLEDValues[index][0] * (1 - abs((abs(positionOffset) - floor(positionOffset)))) + doubleLEDValues[(index + 1) % valuesCount][0] * abs((abs(positionOffset) - floor(positionOffset)));
-    color.g = doubleLEDValues[index][1] * (1 - abs((abs(positionOffset) - floor(positionOffset)))) + doubleLEDValues[(index + 1) % valuesCount][1] * abs((abs(positionOffset) - floor(positionOffset)));
-    color.b = doubleLEDValues[index][2] * (1 - abs((abs(positionOffset) - floor(positionOffset)))) + doubleLEDValues[(index + 1) % valuesCount][2] * abs((abs(positionOffset) - floor(positionOffset)));
+    color.r = doubleLEDValues[index][0] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + doubleLEDValues[(index + 1) % valuesCount][0] * abs((abs(positionOffset) - abs(floor(positionOffset))));
+    color.g = doubleLEDValues[index][1] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + doubleLEDValues[(index + 1) % valuesCount][1] * abs((abs(positionOffset) - abs(floor(positionOffset))));
+    color.b = doubleLEDValues[index][2] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + doubleLEDValues[(index + 1) % valuesCount][2] * abs((abs(positionOffset) - abs(floor(positionOffset))));
 
     return color;
 }

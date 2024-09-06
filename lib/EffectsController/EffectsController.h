@@ -19,15 +19,13 @@ private:
     byte queuedEffectId;
     uint32_t *queuedEffectParams = NULL;
 
-    float effectTransitionWeight;
-    float effectTransitionSpeed;
+    unsigned long effectTransitionStartTimestamp = 0;
+    int effectTransitionDelayMillis = 2000;
     bool transitionDirectionToFirstEffect = true, isTransitionRunning = false;
 
     void IterateOverEffect(CRGB *LEDbuffer, byte effectId, uint32_t *effectParams);
 
-    bool ChangeWeight(bool downDirection);
-
-    void SendWeightedColors(CRGB *from, CRGB *to);
+    bool SendWeightedColors(CRGB *from, CRGB *to);
     void SendColors(CRGB *leds);
 
 public:
@@ -43,8 +41,6 @@ public:
             firstLEDBuffer[i] = CRGB(0, 0, 0);
             secondLEDBuffer[i] = CRGB(0, 0, 0);
         }
-        effectTransitionWeight = 0;
-        effectTransitionSpeed = 0.01;
     }
 
     CRGB *currentLEDBuffer;

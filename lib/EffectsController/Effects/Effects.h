@@ -8,6 +8,7 @@
 #include "AuroraEffect.h"
 #include "LightsReadyEffect.h"
 #include "BeatSaberMainMenuEffect.h"
+#include "ColoredStripsEffect.h"
 //
 
 static Effect* GetEffectById(byte effectId, CRGB *LEDBuffer, size_t ledsCount, uint32_t *effectParams);
@@ -22,6 +23,8 @@ static Effect* GetEffectById(byte effectId, CRGB *LEDBuffer, size_t ledsCount, u
         return new RainbowEffect(LEDBuffer, ledsCount, effectParams);
     case 2:
         return new AuroraEffect(LEDBuffer, ledsCount, effectParams);
+    case 3:
+        return new ColoredStripsEffect(LEDBuffer, ledsCount, effectParams);
     case 254:
         return new BeatSaberMainMenuEffect(LEDBuffer, ledsCount, effectParams);
     case 255:

@@ -10,6 +10,7 @@ void EController::IterateOverEffects() {
             firstEffect = GetEffectById(queuedEffectId, firstLEDBuffer, ledsCount, queuedEffectParams);
             queuedEffectParams = NULL;
             transitionDirectionToFirstEffect = true;
+            effectTransitionStartTimestamp = millis();
             isTransitionRunning = true;
         }
         if (secondEffect == NULL)
@@ -18,6 +19,7 @@ void EController::IterateOverEffects() {
             secondEffect = GetEffectById(queuedEffectId, secondLEDBuffer, ledsCount, queuedEffectParams);
             queuedEffectParams = NULL;
             transitionDirectionToFirstEffect = false;
+            effectTransitionStartTimestamp = millis();
             isTransitionRunning = true;
         }
     }
@@ -47,7 +49,7 @@ void EController::IterateOverEffects() {
 
     if (isTransitionRunning)
     {
-        if (ChangeWeight(!transitionDirectionToFirstEffect)) {
+        if (SendWeightedColors(secondLEDBuffer, firstLEDBuffer)) {
             if (transitionDirectionToFirstEffect)
             {
                 if (secondEffect != NULL)
@@ -66,9 +68,6 @@ void EController::IterateOverEffects() {
             }
             isTransitionRunning = false;
         }
-
-        SendWeightedColors(secondLEDBuffer, firstLEDBuffer);
-
     }
     else
     {
@@ -82,17 +81,32 @@ void EController::IterateOverEffects() {
         }
     }
 
-    //Serial.println(transitionDirectionToFirstEffect);
+    //Serial.println(effectTransitionStartTimestamp);
 }
 
-void EController::SendWeightedColors(CRGB *from, CRGB *to)
+bool EController::SendWeightedColors(CRGB *from, CRGB *to)
 {
+    bool transitionIsEndFlag = false;
+    double effectTransitionWeight = (millis() - effectTransitionStartTimestamp) / (double)effectTransitionDelayMillis;
+    if (effectTransitionWeight >= 1)
+    {
+        effectTransitionWeight = 1;
+        transitionIsEndFlag = true;
+    }
+
+    if (transitionDirectionToFirstEffect)
+    {
+        effectTransitionWeight = 1 - effectTransitionWeight;
+    }
+
     for (int i = 0; i < ledsCount; i++)
     {
-        leds[i][0] = from[i][0] * (1 - effectTransitionWeight) + to[i][0] * effectTransitionWeight;
-        leds[i][1] = from[i][1] * (1 - effectTransitionWeight) + to[i][1] * effectTransitionWeight;
-        leds[i][2] = from[i][2] * (1 - effectTransitionWeight) + to[i][2] * effectTransitionWeight;
+        leds[i][0] = from[i][0] * effectTransitionWeight + to[i][0] * (1 - effectTransitionWeight);
+        leds[i][1] = from[i][1] * effectTransitionWeight + to[i][1] * (1 - effectTransitionWeight);
+        leds[i][2] = from[i][2] * effectTransitionWeight + to[i][2] * (1 - effectTransitionWeight);
     }
+
+    return transitionIsEndFlag;
 }
 
 void EController::SendColors(CRGB *ledsColors)
@@ -101,26 +115,6 @@ void EController::SendColors(CRGB *ledsColors)
     {
         leds[i] = ledsColors[i];
     }
-}
-
-bool EController::ChangeWeight(bool downDirection) {
-    if (downDirection)
-    {
-        effectTransitionWeight -= effectTransitionSpeed;
-        if (effectTransitionWeight <= 0)
-        {
-            effectTransitionWeight = 0;
-            return true;
-        }
-        return false;
-    }
-    effectTransitionWeight += effectTransitionSpeed;
-    if (effectTransitionWeight >= 1)
-    {
-        effectTransitionWeight = 1;
-        return true;
-    }
-    return false;
 }
 
 void EController::SwitchEffect(byte effectId, bool implaceEffect, uint32_t *effectParams) {
@@ -153,6 +147,7 @@ void EController::SwitchEffect(byte effectId, bool implaceEffect, uint32_t *effe
         currentLEDBuffer = firstLEDBuffer;
         firstEffect = GetEffectById(effectId, firstLEDBuffer, ledsCount, effectParams);
         transitionDirectionToFirstEffect = true;
+        effectTransitionStartTimestamp = millis();
         isTransitionRunning = true;
     }
     else if (secondEffect == NULL)
@@ -160,6 +155,7 @@ void EController::SwitchEffect(byte effectId, bool implaceEffect, uint32_t *effe
         currentLEDBuffer = secondLEDBuffer;
         secondEffect = GetEffectById(effectId, secondLEDBuffer, ledsCount, effectParams);
         transitionDirectionToFirstEffect = false;
+        effectTransitionStartTimestamp = millis();
         isTransitionRunning = true;
     }
     else
