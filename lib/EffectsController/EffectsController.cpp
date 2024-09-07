@@ -23,7 +23,7 @@ void EController::IterateOverEffects() {
             isTransitionRunning = true;
         }
     }
-
+    //unsigned long timestamp = millis();
     if (firstEffect != NULL)
     {
         if (isTransitionRunning)
@@ -46,6 +46,8 @@ void EController::IterateOverEffects() {
             secondEffect->Iterate();
         }
     }
+
+    //Serial.println(millis() - timestamp);
 
     if (isTransitionRunning)
     {

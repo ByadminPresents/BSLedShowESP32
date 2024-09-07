@@ -3,8 +3,9 @@
 #include <math.h>
 #include <WiFi.h>
 #include <Arduino.h>
+#include "lwip/netif.h"
 
-#include <EffectsController.h>
+#include "EffectsController.h"
 
 const char *ssid = "";
 const char *password = "";
@@ -32,8 +33,6 @@ TaskHandle_t IterateOverEffectsTask = NULL;
 
 EController effectsController(leds, NUM_LEDS);
 
-bool test = false;
-
 bool isUpdateLEDsTaskRunning = true;
 bool isEffectsIterating = true;
 
@@ -56,9 +55,8 @@ void setup()
   // Инициализация TCP-сервера
   auto server = new AsyncServer(PORT);
   server->onClient([](void *s, AsyncClient *client)
-                   {
+    {
      //Serial.println("New client connected");
-
 
     // Прием данных от клиента
     client->onData([](void* r, AsyncClient* client, void* data, size_t len) {
@@ -256,7 +254,7 @@ void IterateOverEffects(void *pvParameters) {
   }
   vTaskDelete(NULL);
 }
-int counter = 0;
+
 void loop()
 {
 

@@ -40,11 +40,11 @@ bool AuroraEffect::Iterate()
 
     for (int i = 0; i < ledsCount; i++)
     {
-        DoubleCRGB resultColor = DoubleCRGB(AuroraEffect::defaultR, AuroraEffect::defaultG, AuroraEffect::defaultB);
+        FloatCRGB resultColor = FloatCRGB(AuroraEffect::defaultR, AuroraEffect::defaultG, AuroraEffect::defaultB);
 
         for (int j = 0; j < maxCountOfNodes; j++)
         {
-            DoubleCRGB tempColor = nodes[j].GetColor(i);
+            FloatCRGB tempColor = nodes[j].GetColor(i);
 
             if (tempColor.r == AuroraEffect::defaultR && tempColor.g == AuroraEffect::defaultG && tempColor.b == AuroraEffect::defaultB)
             {
@@ -143,7 +143,7 @@ bool AuroraEffect::AuroraNode::Iterate()
     currentCountOfProjectiles = 0;
     for (int i = 0; i < maxCountOfProjectiles; i++)
     {
-        if (!projectiles[i].Iterate(doubleLEDValues, valuesCount))
+        if (!projectiles[i].Iterate(floatLEDValues, valuesCount))
         {
             if (initProjectilesFlag)
             {
@@ -159,34 +159,34 @@ bool AuroraEffect::AuroraNode::Iterate()
 
     for (int i = 0; i < valuesCount; i++)
     {
-        if (doubleLEDValues[i][0] > defaultR)
+        if (floatLEDValues[i][0] > defaultR)
         {
-            doubleLEDValues[i][0] -= (doubleLEDValues[i][0] - defaultR) / 20;
+            floatLEDValues[i][0] -= (floatLEDValues[i][0] - defaultR) / 20;
         }
         
-        if (doubleLEDValues[i][1] > defaultG)
+        if (floatLEDValues[i][1] > defaultG)
         {
-            doubleLEDValues[i][1] -= doubleLEDValues[i][1] / 500;
+            floatLEDValues[i][1] -= floatLEDValues[i][1] / 500;
         }
         
-        if (doubleLEDValues[i][2] > defaultB)
+        if (floatLEDValues[i][2] > defaultB)
         {
-            doubleLEDValues[i][2] -= pow(doubleLEDValues[i][2], 2) / 1000;
+            floatLEDValues[i][2] -= pow(floatLEDValues[i][2], 2) / 1000;
         }
 
-        if (doubleLEDValues[i][0] < defaultR)
+        if (floatLEDValues[i][0] < defaultR)
         {
-            doubleLEDValues[i][0] = defaultR;
+            floatLEDValues[i][0] = defaultR;
         }
                 
-        if (doubleLEDValues[i][1] < defaultG)
+        if (floatLEDValues[i][1] < defaultG)
         {
-            doubleLEDValues[i][1] = defaultG;
+            floatLEDValues[i][1] = defaultG;
         }
                 
-        if (doubleLEDValues[i][2] < defaultB)
+        if (floatLEDValues[i][2] < defaultB)
         {
-            doubleLEDValues[i][2] = defaultB;
+            floatLEDValues[i][2] = defaultB;
         }        
     }
 
@@ -206,12 +206,12 @@ bool AuroraEffect::AuroraNode::Iterate()
 
 AuroraEffect::AuroraNode::AuroraNode(int valuesCount, int maxCountOfProjectiles) : valuesCount(valuesCount), maxCountOfProjectiles(maxCountOfProjectiles)
 {
-    doubleLEDValues.reserve(valuesCount);
+    floatLEDValues.reserve(valuesCount);
     projectiles.reserve(maxCountOfProjectiles);
 
     for (int i = 0; i < valuesCount; i++)
     {
-        doubleLEDValues.emplace_back((double)defaultR, (double)defaultG, (double)defaultB);
+        floatLEDValues.emplace_back((float)defaultR, (float)defaultG, (float)defaultB);
     }
 
     for (int i = 0; i < maxCountOfProjectiles; i++)
@@ -236,9 +236,9 @@ void AuroraEffect::AuroraNode::Init(int projectilesSpawnPosition)
     AuroraNode::isInit = true;
 }
 
-DoubleCRGB AuroraEffect::AuroraNode::GetColor(int index)
+FloatCRGB AuroraEffect::AuroraNode::GetColor(int index)
 {
-    DoubleCRGB color;
+    FloatCRGB color;
 
     index = (index + (int)floor(positionOffset)) % valuesCount;
     if (index < 0)
@@ -246,9 +246,9 @@ DoubleCRGB AuroraEffect::AuroraNode::GetColor(int index)
         index = valuesCount + index;
     }
 
-    color.r = doubleLEDValues[index][0] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + doubleLEDValues[(index + 1) % valuesCount][0] * abs((abs(positionOffset) - abs(floor(positionOffset))));
-    color.g = doubleLEDValues[index][1] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + doubleLEDValues[(index + 1) % valuesCount][1] * abs((abs(positionOffset) - abs(floor(positionOffset))));
-    color.b = doubleLEDValues[index][2] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + doubleLEDValues[(index + 1) % valuesCount][2] * abs((abs(positionOffset) - abs(floor(positionOffset))));
+    color.r = floatLEDValues[index][0] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + floatLEDValues[(index + 1) % valuesCount][0] * abs((abs(positionOffset) - abs(floor(positionOffset))));
+    color.g = floatLEDValues[index][1] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + floatLEDValues[(index + 1) % valuesCount][1] * abs((abs(positionOffset) - abs(floor(positionOffset))));
+    color.b = floatLEDValues[index][2] * (1 - abs((abs(positionOffset) - abs(floor(positionOffset))))) + floatLEDValues[(index + 1) % valuesCount][2] * abs((abs(positionOffset) - abs(floor(positionOffset))));
 
     return color;
 }
@@ -258,7 +258,7 @@ AuroraEffect::AuroraNode::AuroraProjectile::AuroraProjectile()
     power = 0;
 }
 
-void AuroraEffect::AuroraNode::AuroraProjectile::Init(double maxPower, int x, int dispersion)
+void AuroraEffect::AuroraNode::AuroraProjectile::Init(float maxPower, int x, int dispersion)
 {
     AuroraProjectile::x = GetRandomValue(x - dispersion, x + dispersion);
     power = GetRandomValue(maxPower * (1 / (10 + abs(x - AuroraProjectile::x) / 16)), maxPower * (1 / (1 + abs(x - AuroraProjectile::x) / 16)));
@@ -281,7 +281,7 @@ void AuroraEffect::AuroraNode::AuroraProjectile::Init(double maxPower, int x, in
     }
 }
 
-void AuroraEffect::AuroraNode::AuroraProjectile::ApplyColorForX(int x, std::vector<DoubleCRGB>& values, int valuesCount)
+void AuroraEffect::AuroraNode::AuroraProjectile::ApplyColorForX(int x, std::vector<FloatCRGB>& values, int valuesCount)
 {
     for (int i = -3; i <= 3; i++)
     {
@@ -310,7 +310,7 @@ void AuroraEffect::AuroraNode::AuroraProjectile::ApplyColorForX(int x, std::vect
     
 }
 
-bool AuroraEffect::AuroraNode::AuroraProjectile::Iterate(std::vector<DoubleCRGB>& values, int valuesCount)//std::vector<DoubleCRGB>& values
+bool AuroraEffect::AuroraNode::AuroraProjectile::Iterate(std::vector<FloatCRGB>& values, int valuesCount)
 {
     if (power <= 0.01)
     {
@@ -318,7 +318,7 @@ bool AuroraEffect::AuroraNode::AuroraProjectile::Iterate(std::vector<DoubleCRGB>
         return false;
     }
 
-    double x1 = x, x2 = x;
+    float x1 = x, x2 = x;
     x += speed;
     if (speed < 0)
     {

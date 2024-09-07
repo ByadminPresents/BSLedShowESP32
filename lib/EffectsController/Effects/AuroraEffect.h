@@ -30,16 +30,16 @@ private:
 
         struct AuroraProjectile;
 
-        std::vector<DoubleCRGB> doubleLEDValues;
+        std::vector<FloatCRGB> floatLEDValues;
         int valuesCount;
 
-        double positionOffset = 0;
-        double positionOffsetSpeed = 0;
+        float positionOffset = 0;
+        float positionOffsetSpeed = 0;
 
-        double projectilesSpawnPosition = 0;
-        double projectilesSpawnDispersion = 0;
+        float projectilesSpawnPosition = 0;
+        float projectilesSpawnDispersion = 0;
 
-        double maxProjectilePowerValue = 0;
+        float maxProjectilePowerValue = 0;
 
 
         std::vector<AuroraProjectile> projectiles;
@@ -49,20 +49,20 @@ private:
         class AuroraProjectile
         {
         private:
-            double x;
-            double speed;
-            double power = 0;
-            double maxPowerLoss;
-            double minPowerLoss;
+            float x;
+            float speed;
+            float power = 0;
+            float maxPowerLoss;
+            float minPowerLoss;
 
-            void ApplyColorForX(int x, std::vector<DoubleCRGB>& values, int valuesCount);
+            void ApplyColorForX(int x, std::vector<FloatCRGB>& values, int valuesCount);
 
         public:
             AuroraProjectile();
 
-            void Init(double maxPower, int x, int dispersion);
+            void Init(float maxPower, int x, int dispersion);
 
-            bool Iterate(std::vector<DoubleCRGB>& values, int valuesCount);
+            bool Iterate(std::vector<FloatCRGB>& values, int valuesCount);
         };
 
     public:
@@ -76,7 +76,7 @@ private:
 
         bool Iterate();
 
-        DoubleCRGB GetColor(int index);
+        FloatCRGB GetColor(int index);
     };
 
 public:
