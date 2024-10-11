@@ -1,9 +1,10 @@
 #include <FastLED.h>
-#include <AsyncTCP.h>
+// #include <AsyncTCP.h>
 #include <math.h>
 #include <WiFi.h>
 #include <Arduino.h>
 #include "lwip/netif.h"
+#include <AsyncUDP.h>
 
 #include "EffectsController.h"
 
@@ -27,7 +28,6 @@ void IterateOverEffects(void *pvParameters);
 void extractValues(uint8_t *byte_array, uint32_t *values, size_t num_values, uint8_t mode);
 void SetLightUpdateLoopState(bool state);
 
-
 TaskHandle_t UpdateLEDsTask = NULL;
 TaskHandle_t IterateOverEffectsTask = NULL;
 
@@ -40,7 +40,7 @@ void setup()
 {
   FastLED.addLeds<WS2813, DATA_PIN, RGB>(leds, NUM_LEDS);
 
-  xTaskCreatePinnedToCore(IterateOverEffects, "IterateOverEffects", 10000, (void*)&effectsController, 1, &IterateOverEffectsTask, 0);
+  xTaskCreatePinnedToCore(IterateOverEffects, "IterateOverEffects", 10000, (void *)&effectsController, 1, &IterateOverEffectsTask, 0);
 
   Serial.begin(115200);
 
@@ -52,20 +52,21 @@ void setup()
   }
   Serial.println("Connected to WiFi");
 
-  // Инициализация TCP-сервера
-  auto server = new AsyncServer(PORT);
-  server->onClient([](void *s, AsyncClient *client)
-    {
-     //Serial.println("New client connected");
+  // Инициализация UDP-сервера
 
-    // Прием данных от клиента
-    client->onData([](void* r, AsyncClient* client, void* data, size_t len) {
-      //Serial.println(len);
-      if (len <= BUFFER_SIZE) {
-        byte bytesBuffer[len];
-        memcpy(bytesBuffer, data, len);
+  AsyncUDP server;
 
-        if (len == 0) {
+  if (server.listen(PORT))
+  {
+    server.onPacket([](AsyncUDPPacket packet)
+                    {
+                      size_t length = packet.length();
+                      auto data = packet.data();
+if (length <= BUFFER_SIZE) {
+        byte bytesBuffer[length];
+        memcpy(bytesBuffer, data, length);
+
+        if (length == 0) {
           return;
         }
 
@@ -76,11 +77,11 @@ void setup()
         switch (mode)
         {
         case 0:
-          num_values = (len * 8) / 46 * 5;
+          num_values = (length * 8) / 46 * 5;
           break;
         case 1:
         case 2:
-          num_values = (len * 8) / 32;
+          num_values = (length * 8) / 32;
           break;
         default:
           break;
@@ -126,19 +127,10 @@ void setup()
           }
           break;
         }
-      } else {
-        Serial.println("Received data exceeds buffer size!");
-      }
-    });
+      } });
 
-    client->onDisconnect([](void* r, AsyncClient* client) {
-      delete client;
-    }); },
-                   NULL);
-
-  server->begin();
-
-  Serial.println("Server started");
+    Serial.println("Server started");
+  }
 }
 
 void SetLightUpdateLoopState(bool state)
@@ -227,7 +219,7 @@ void extractValues(uint8_t *byte_array, uint32_t *values, size_t num_values, uin
       }
 
       // Извлекаем первое значение (32 бит)
-      //values[value_index++] = (bit_stream >> 32) & 0xFFFFFFFF;
+      // values[value_index++] = (bit_stream >> 32) & 0xFFFFFFFF;
 
       // Извлекаем второе значение (32 бит)
       values[value_index++] = bit_stream;
@@ -239,9 +231,10 @@ void extractValues(uint8_t *byte_array, uint32_t *values, size_t num_values, uin
   }
 }
 
-void IterateOverEffects(void *pvParameters) {
+void IterateOverEffects(void *pvParameters)
+{
   srand(esp_random());
-  EController* effectsController = (EController*)pvParameters;
+  EController *effectsController = (EController *)pvParameters;
   for (;;)
   {
     if (isEffectsIterating)
@@ -250,12 +243,11 @@ void IterateOverEffects(void *pvParameters) {
     }
 
     FastLED.show();
-    //delay(1);
+    // delay(1);
   }
   vTaskDelete(NULL);
 }
 
 void loop()
 {
-
 }
