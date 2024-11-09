@@ -14,8 +14,8 @@ private:
 public:
     RainbowEffect(CRGB *leds, uint16_t ledsCount, uint32_t *params) : Effect(leds, ledsCount, params) 
     {
-        speed = params[1] / 100.0;
         oppositeDirection = (bool)params[0];
+        speed = params[1] / 100.0;
     };
 
     bool Iterate() override;

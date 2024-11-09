@@ -1,10 +1,13 @@
 #include <FastLED.h>
-// #include <AsyncTCP.h>
 #include <math.h>
 #include <WiFi.h>
 #include <Arduino.h>
 #include "lwip/netif.h"
 #include <AsyncUDP.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
 
 #include "EffectsController.h"
 
@@ -36,6 +39,103 @@ EController effectsController(leds, NUM_LEDS);
 bool isUpdateLEDsTaskRunning = true;
 bool isEffectsIterating = true;
 
+AsyncUDP server;
+
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+void HandleData(size_t length, uint8_t * data);
+
+class BLECharacteristicCallbacksHandler: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) override {
+        std::string rxValue = pCharacteristic->getValue();
+        
+        if (!rxValue.empty()) {
+            size_t bufferSize = rxValue.size();
+            auto byteBuffer = new uint8_t[bufferSize];
+
+            memcpy(byteBuffer, rxValue.data(), bufferSize);
+
+            HandleData(bufferSize, byteBuffer);
+        }
+    }
+};
+
+class BLEServerCallbacksHandler: public BLEServerCallbacks {
+    void onDisconnect(BLEServer* pServer, esp_ble_gatts_cb_param_t *param) override {
+    pServer->startAdvertising();
+  }
+};
+
+void HandleData(size_t length, uint8_t *data)
+{
+  byte bytesBuffer[length];
+  memcpy(bytesBuffer, data, length);
+
+  if (length == 0)
+  {
+    return;
+  }
+
+  size_t num_values = 0;
+
+  uint8_t mode = bytesBuffer[0] >> 6;
+
+  switch (mode)
+  {
+  case 0:
+    num_values = (length * 8) / 46 * 5;
+    break;
+  case 1:
+  case 2:
+    num_values = (length * 8) / 32;
+    break;
+  default:
+    break;
+  }
+
+  uint32_t values[num_values];
+
+  extractValues(bytesBuffer, values, num_values, mode);
+
+  uint32_t *effectValues = nullptr;
+
+  if (mode == 1 && num_values > 2)
+  {
+    size_t byteSize = (num_values - 2) * sizeof(uint32_t);
+    effectValues = (uint32_t *)malloc(byteSize);
+    memcpy(effectValues, values + 2, byteSize);
+  }
+
+  switch (mode)
+  {
+  case 0:
+    for (int i = 0; i < num_values; i += 5)
+    {
+      for (int j = values[i]; j <= values[i + 1] && j < NUM_LEDS; j++)
+      {
+        effectsController.currentLEDBuffer[j][0] = values[i + 2];
+        effectsController.currentLEDBuffer[j][1] = values[i + 3];
+        effectsController.currentLEDBuffer[j][2] = values[i + 4];
+      }
+    }
+    break;
+  case 1:
+    effectsController.SwitchEffect(values[0], (bool)values[1], effectValues);
+    break;
+  case 2:
+    if (values[0] == 0)
+    {
+      SetLightUpdateLoopState((bool)values[1]);
+    }
+    if (values[0] == 1)
+    {
+      FastLED.setBrightness(values[1]);
+    }
+    break;
+  }
+}
+
 void setup()
 {
   FastLED.addLeds<WS2813, DATA_PIN, RGB>(leds, NUM_LEDS);
@@ -54,83 +154,39 @@ void setup()
 
   // Инициализация UDP-сервера
 
-  AsyncUDP server;
-
   if (server.listen(PORT))
   {
+    Serial.println("Listening");
     server.onPacket([](AsyncUDPPacket packet)
-                    {
-                      size_t length = packet.length();
-                      auto data = packet.data();
-if (length <= BUFFER_SIZE) {
-        byte bytesBuffer[length];
-        memcpy(bytesBuffer, data, length);
-
-        if (length == 0) {
-          return;
-        }
-
-        size_t num_values = 0;
-
-        uint8_t mode = bytesBuffer[0] >> 6;
-
-        switch (mode)
-        {
-        case 0:
-          num_values = (length * 8) / 46 * 5;
-          break;
-        case 1:
-        case 2:
-          num_values = (length * 8) / 32;
-          break;
-        default:
-          break;
-        }
-
-        uint32_t values[num_values];
-
-        extractValues(bytesBuffer, values, num_values, mode);
-
-        uint32_t *effectValues = nullptr;
-
-        if (mode == 1 && num_values > 2)
-        {
-          size_t byteSize = (num_values - 2) * sizeof(uint32_t);
-          effectValues = (uint32_t*)malloc(byteSize);
-          memcpy(effectValues, values + 2, byteSize);
-        }
-
-        switch (mode)
-        {
-        case 0:
-          for (int i = 0; i < num_values; i += 5)
-          {
-            for (int j = values[i]; j <= values[i + 1] && j < NUM_LEDS; j++)
-            {
-              effectsController.currentLEDBuffer[j][0] = values[i + 2];
-              effectsController.currentLEDBuffer[j][1] = values[i + 3];
-              effectsController.currentLEDBuffer[j][2] = values[i + 4];
-            }
-          }
-          break;
-        case 1:
-          effectsController.SwitchEffect(values[0], (bool)values[1], effectValues);
-          break;
-        case 2:
-          if (values[0] == 0)
-          {
-              SetLightUpdateLoopState((bool)values[1]);
-          }
-          if (values[0] == 1)
-          {
-            FastLED.setBrightness(values[1]);
-          }
-          break;
-        }
+    {
+      Serial.println("Packet has been received");
+      size_t length = packet.length();
+      auto data = packet.data();
+      if (length <= BUFFER_SIZE) {
+        HandleData(length, data);
       } });
 
     Serial.println("Server started");
   }
+
+  BLEDevice::init("ESP32_LED");
+    BLEServer *pServer = BLEDevice::createServer();
+
+    pServer->setCallbacks(new BLEServerCallbacksHandler());
+
+    BLEService *pService = pServer->createService(SERVICE_UUID);
+
+    BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+                                         CHARACTERISTIC_UUID,
+                                         BLECharacteristic::PROPERTY_WRITE
+                                       );
+
+    pCharacteristic->setCallbacks(new BLECharacteristicCallbacksHandler());
+    pService->start();
+
+    BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+    pAdvertising->addServiceUUID(SERVICE_UUID);
+    pAdvertising->start();
 }
 
 void SetLightUpdateLoopState(bool state)
