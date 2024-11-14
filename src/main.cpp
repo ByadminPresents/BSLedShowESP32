@@ -128,9 +128,13 @@ void HandleData(size_t length, uint8_t *data)
     {
       SetLightUpdateLoopState((bool)values[1]);
     }
-    if (values[0] == 1)
+    else if (values[0] == 1)
     {
       FastLED.setBrightness(values[1]);
+    }
+    else if (values[0] == 2)
+    {
+      effectsController.effectTransitionDelayMillis = values[1];
     }
     break;
   }
@@ -306,4 +310,5 @@ void IterateOverEffects(void *pvParameters)
 
 void loop()
 {
+
 }

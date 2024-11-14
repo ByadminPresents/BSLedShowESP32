@@ -20,7 +20,6 @@ private:
     uint32_t *queuedEffectParams = NULL;
 
     unsigned long effectTransitionStartTimestamp = 0;
-    int effectTransitionDelayMillis = 2000;
     bool transitionDirectionToFirstEffect = true, isTransitionRunning = false;
 
     void IterateOverEffect(CRGB *LEDbuffer, byte effectId, uint32_t *effectParams);
@@ -29,6 +28,8 @@ private:
     void SendColors(CRGB *leds);
 
 public:
+    int effectTransitionDelayMillis = 2000;
+
     EController(CRGB *leds, int ledsCount) : leds(leds), ledsCount(ledsCount)
     {
         firstLEDBuffer = (CRGB*)malloc(ledsCount * sizeof(*firstLEDBuffer));
