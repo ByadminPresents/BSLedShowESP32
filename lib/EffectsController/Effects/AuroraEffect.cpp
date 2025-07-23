@@ -9,6 +9,13 @@ AuroraEffect::AuroraEffect(CRGB *leds, uint16_t ledsCount, uint32_t *params) : v
 
 bool AuroraEffect::Iterate()
 {
+    skippedIterations++;
+    if (skipIterations >= skippedIterations)
+    {
+        return true;
+    }
+    skippedIterations = 0;
+
     if (!isVectorsAllocated)
     {
         nodes.reserve(maxCountOfNodes);
@@ -113,11 +120,11 @@ bool AuroraEffect::AuroraNode::Iterate()
     {
         if (AuroraNode::isBoosted)
         {
-            AuroraNode::maxProjectilePowerValue += GetRandomValue(-0.03, 0.01);
+            AuroraNode::maxProjectilePowerValue += GetRandomValue(-0.03f, 0.01f);
         }
         else
         {
-            AuroraNode::maxProjectilePowerValue += GetRandomValue(-0.01, 0.08);
+            AuroraNode::maxProjectilePowerValue += GetRandomValue(-0.01f, 0.08f);
             if (AuroraNode::maxProjectilePowerValue < 0.05)
             {
                 AuroraNode::maxProjectilePowerValue = 0.05;
@@ -190,8 +197,8 @@ bool AuroraEffect::AuroraNode::Iterate()
         }        
     }
 
-    projectilesSpawnPosition += GetRandomValue(-2.0, 2.0);
-    projectilesSpawnDispersion += GetRandomValue(-2.0, 2.0);
+    projectilesSpawnPosition += GetRandomValue(-2.0f, 2.0f);
+    projectilesSpawnDispersion += GetRandomValue(-2.0f, 2.0f);
     if (projectilesSpawnDispersion < 80)
     {
         projectilesSpawnDispersion = 80;
@@ -225,9 +232,9 @@ void AuroraEffect::AuroraNode::Init(int projectilesSpawnPosition)
 {
     AuroraNode::isBoosted = false;
     AuroraNode::projectilesSpawnPosition = projectilesSpawnPosition;
-    AuroraNode::projectilesSpawnDispersion = GetRandomValue(80.0, valuesCount / 6.0);
-    AuroraNode::maxProjectilePowerValue = GetRandomValue(0.5, 1.0);
-    AuroraNode::positionOffsetSpeed = GetRandomValue(0.005, 0.1);
+    AuroraNode::projectilesSpawnDispersion = GetRandomValue(80.0f, valuesCount / 6.0f);
+    AuroraNode::maxProjectilePowerValue = GetRandomValue(0.5f, 1.0f);
+    AuroraNode::positionOffsetSpeed = GetRandomValue(0.005f, 0.1f);
     if (GetRandomValue(0, 2) == 0)
     {
         AuroraNode::positionOffsetSpeed *= -1;
@@ -264,7 +271,7 @@ void AuroraEffect::AuroraNode::AuroraProjectile::Init(float maxPower, int x, int
     power = GetRandomValue(maxPower * (1 / (10 + abs(x - AuroraProjectile::x) / 16)), maxPower * (1 / (1 + abs(x - AuroraProjectile::x) / 16)));
     maxPowerLoss = power / 10;
     minPowerLoss = power / 100;
-    speed = GetRandomValue(0.3, 1.5);
+    speed = GetRandomValue(0.3f, 1.5f);
 
     if (GetRandomValue(-10000, 10000) == 0)
     {

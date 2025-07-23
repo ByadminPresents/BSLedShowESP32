@@ -29,6 +29,7 @@ private:
 
 public:
     int effectTransitionDelayMillis = 2000;
+    int effectIterationDelayMillis = 5;
 
     EController(CRGB *leds, int ledsCount) : leds(leds), ledsCount(ledsCount)
     {

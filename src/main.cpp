@@ -8,6 +8,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <esp_wifi.h>
 
 #include "EffectsController.h"
 
@@ -25,14 +26,16 @@ const uint16_t BUFFER_SIZE = 512;
 
 CRGB leds[NUM_LEDS];
 
-void UpdateLEDs(void *pvParameters);
 void IterateOverEffects(void *pvParameters);
+void SendLedsData(void *pvParameters);
+void InitializeWifi(void *pvParameters);
 
 void extractValues(uint8_t *byte_array, uint32_t *values, size_t num_values, uint8_t mode);
 void SetLightUpdateLoopState(bool state);
 
 TaskHandle_t UpdateLEDsTask = NULL;
 TaskHandle_t IterateOverEffectsTask = NULL;
+TaskHandle_t InitializeWifiTask = NULL;
 
 EController effectsController(leds, NUM_LEDS);
 
@@ -140,38 +143,26 @@ void HandleData(size_t length, uint8_t *data)
   }
 }
 
+long timestamp = 0;
+
+int queuedPackets = 0;
+int packetDelay = 5;
+unsigned long packetTimestamp = 0;
+
+
 void setup()
 {
+  packetTimestamp = millis();
+  esp_wifi_set_ps(WIFI_PS_NONE);
   FastLED.addLeds<WS2813, DATA_PIN, RGB>(leds, NUM_LEDS);
-
+  FastLED.setMaxRefreshRate(0);
+  //digitalWrite(RGB_BUILTIN, LOW);
   xTaskCreatePinnedToCore(IterateOverEffects, "IterateOverEffects", 10000, (void *)&effectsController, 1, &IterateOverEffectsTask, 0);
-
+  xTaskCreatePinnedToCore(InitializeWifi, "InitializeWifi", 10000, NULL, 1, &InitializeWifiTask, 0);
+  xTaskCreatePinnedToCore(SendLedsData, "SendLedsData", 10000, NULL, 1, &UpdateLEDsTask, 1);
   Serial.begin(115200);
 
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
 
-  // Инициализация UDP-сервера
-
-  if (server.listen(PORT))
-  {
-    Serial.println("Listening");
-    server.onPacket([](AsyncUDPPacket packet)
-    {
-      Serial.println("Packet has been received");
-      size_t length = packet.length();
-      auto data = packet.data();
-      if (length <= BUFFER_SIZE) {
-        HandleData(length, data);
-      } });
-
-    Serial.println("Server started");
-  }
 
   BLEDevice::init("ESP32_LED");
     BLEServer *pServer = BLEDevice::createServer();
@@ -295,20 +286,93 @@ void IterateOverEffects(void *pvParameters)
 {
   srand(esp_random());
   EController *effectsController = (EController *)pvParameters;
+  TickType_t xDelay = 1;
   for (;;)
   {
     if (isEffectsIterating)
     {
       effectsController->IterateOverEffects();
     }
-
-    FastLED.show();
+    vTaskDelay(xDelay);
     // delay(1);
   }
   vTaskDelete(NULL);
 }
 
+void SendLedsData(void *pvParameters)
+{
+  TickType_t xDelay = 1;
+  for (;;)
+  {
+    FastLED.show();
+    vTaskDelay(xDelay);
+    //delay(1);
+  }
+  vTaskDelete(NULL);
+}
+
+TickType_t pDelay = 0;
+
+void InitializeWifi(void *pvParameters)
+{
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
+
+  // Инициализация UDP-сервера
+
+  if (server.listen(PORT))
+  {
+    Serial.println("Listening");
+    server.onPacket([](AsyncUDPPacket packet)
+    {
+      size_t length = packet.length();
+      auto data = packet.data();
+      if (length <= BUFFER_SIZE) {
+        unsigned long time = millis();
+        // if (queuedPackets == 0 && time - packetTimestamp > packetDelay)
+        // {
+        //   Serial.println(time - packetTimestamp);
+        //   packetTimestamp = time;
+        //   HandleData(length, data);
+        // }
+        // else
+        // {
+        //   int qPackets = queuedPackets;
+        //   queuedPackets += 1;
+        //   pDelay = (qPackets * packetDelay + packetDelay - (time - packetTimestamp)) / portTICK_PERIOD_MS;
+        //   //Serial.println(5 / portTICK_PERIOD_MS);
+        //   vTaskDelay(5 / portTICK_PERIOD_MS);
+        //   queuedPackets -= 1;
+        //   Serial.println(time - packetTimestamp);
+        //   packetTimestamp = time;
+        //   HandleData(length, data);
+        // }
+        //vTaskDelay(3 / portTICK_PERIOD_MS);
+        Serial.println(time - packetTimestamp);
+        packetTimestamp = time;
+        HandleData(length, data);
+        //HandleData(length, data);
+      } });
+
+    Serial.println("Server started");
+  }
+  TickType_t xDelay = 5000;
+  for (;;)
+  {
+    vTaskDelay(xDelay);
+    //delay(1);
+  }
+  //vTaskDelete(NULL);
+}
+
 void loop()
 {
+  //delay(1);
 
 }

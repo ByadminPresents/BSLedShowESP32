@@ -14,70 +14,90 @@ bool LightsReadyEffect::Iterate()
     //     }
     //     isBufferInitialized = true;
     // }
-    if (iteration > stopThreshold + 100)
+    if (iteration > stopThreshold + 700)
     {
         return false;
     }
     iteration++;
     if (iteration < thresholdIteration)
     {
-        double brightness = 0;
+        float brightness = 0;
         int from = InterpolateIndexes(centerIndex, rightCorner - 60, iteration, thresholdIteration);
         int to = InterpolateIndexes(centerIndex, rightCorner - 60, iteration - 1, thresholdIteration) + 40;
         
         for (int i = from; i < to; i++)
         {
-            if (i > from + 5)
-            {
-                brightness += (brightness + 8) / 8;
-            }
-            if (brightness > 255)
-            {
-                brightness = 255;
-            }
+            brightness += (brightness + 2) * 1.04;
             if (i < 0 || i >= centerIndex)
             {
                 continue;
             }
+            
             for (int j = 0; j < 3; j++)
             {
-                leds[i][j] = max((int)leds[i][j], (int)brightness);
+                leds[i][j] = min(255, (int)brightness);
             }
+            // if (i > from + 5)
+            // {
+            //     brightness += (brightness + 2) * 1.08;
+            // }
+            // if (brightness > 255)
+            // {
+            //     brightness = 255;
+            // }
+            // if (i < 0 || i >= centerIndex)
+            // {
+            //     continue;
+            // }
+            // for (int j = 0; j < 3; j++)
+            // {
+            //     leds[i][j] = max((int)leds[i][j], (int)brightness);
+            // }
         }
-        brightness = 255; 
+        brightness = 0; 
         from = InterpolateIndexes(centerIndex, leftCorner + 60, iteration - 1, thresholdIteration) - 40;
         to = InterpolateIndexes(centerIndex, leftCorner + 60, iteration, thresholdIteration);
-        for (int i = from; i < to; i++)
+        for (int i = to; i > from; i--)
         {
-            if (i > from + 5)
-            {
-                brightness -= (brightness + 8) / 8;
-            }
-            if (brightness < 0)
-            {
-                brightness = 0;
-            }
+            brightness += (brightness + 2) * 1.04;
             if (i < centerIndex || i > leftCorner)
             {
                 continue;
             }
+            
             for (int j = 0; j < 3; j++)
             {
-                leds[i][j] = max((int)leds[i][j], (int)brightness);
+                leds[i][j] = min(255, (int)brightness);
             }
+            // if (i > from + 5)
+            // {
+            //     brightness += (brightness + 2) * 1.08;
+            // }
+            // if (brightness > 255)
+            // {
+            //     brightness = 255;
+            // }
+            // if (i < centerIndex || i > leftCorner)
+            // {
+            //     continue;
+            // }
+            // for (int j = 0; j < 3; j++)
+            // {
+            //     leds[i][j] = max((int)leds[i][j], (int)brightness);
+            // }
         }
     }
 
-    if (iteration >= thresholdIteration - brightnessOffset && iteration < stopThreshold && iteration % 7 == 0)
+    if (iteration >= thresholdIteration - brightnessOffset && iteration < stopThreshold && iteration % 60 == 0)
     {
-        double brightness = 1;
+        float brightness = 1;
         if (iteration <= thresholdIteration)
         {
-            brightness = pow(iteration - (thresholdIteration - brightnessOffset), 2.6) / pow(brightnessOffset, 2.6);
+            brightness = pow(iteration - (thresholdIteration - brightnessOffset), 1.1) / pow(brightnessOffset, 1.1);
         }
         if (iteration >= stopThreshold - brightnessOffset)
         {
-            brightness = pow(brightnessOffset - (iteration - (stopThreshold - brightnessOffset)), 2.6) / pow(brightnessOffset, 2.6);
+            brightness = pow(brightnessOffset - (iteration - (stopThreshold - brightnessOffset)), 1.1) / pow(brightnessOffset, 1.1);
         }
         for (int i = 0; i < 4; i++)
         {
@@ -97,10 +117,10 @@ bool LightsReadyEffect::Iterate()
 
     for (int i = 0; i < ledsCount; i++)
     {
-        double divider = 14.0;
+        float divider = 112.0;
         if (iteration > thresholdIteration - brightnessOffset && i >= leftCorner)
         {
-            divider = 4.0;
+            divider = 32.0;
         }
 
         for (int j = 0; j < 3; j++)
@@ -116,7 +136,7 @@ bool LightsReadyEffect::Iterate()
         }
     }
 
-    if (iteration == stopThreshold + 100)
+    if (iteration == stopThreshold + 700)
     {
         for (int i = leftCorner; i < ledsCount; i++)
         {
@@ -152,8 +172,8 @@ static int InterpolateIndexes(int fromIndex, int toIndex, int f, int fMax)
     if (fromIndex > toIndex)
     {
         x = fromIndex - toIndex;
-        return fromIndex - floor(f * (double)x / fMax);
+        return fromIndex - floor(f * (float)x / fMax);
     }
     x = toIndex - fromIndex;
-    return floor(fromIndex + f * (double)x / fMax);
+    return floor(fromIndex + f * (float)x / fMax);
 }

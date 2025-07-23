@@ -9,14 +9,14 @@ class ColoredStripsEffect : public Effect
 {
 private:
     bool oppositeDirection = false;
-    double speed, colorStripLength = 0, offset = 0;
+    float speed, colorStripLength = 0, offset = 0;
     int countOfBatches, countOfColors, range = 1, spacing = 2;
     std::vector<CRGB> colors;
 public:
     ColoredStripsEffect(CRGB *leds, uint16_t ledsCount, uint32_t *params) : Effect(leds, ledsCount, params) 
     {
         oppositeDirection = (bool)params[0];
-        speed = params[1] / 100.0;
+        speed = params[1] / 800.0;
         countOfBatches = params[2];
         range = abs((int)params[3]);
         spacing = abs((int)params[4]);
@@ -26,7 +26,7 @@ public:
         {
             colors.emplace_back(params[i], params[i + 1], params[i + 2]);
         }
-        colorStripLength = (ledsCount - (countOfBatches * range) - (countOfBatches * (countOfColors - 1) * spacing)) / (double)(countOfBatches * countOfColors);
+        colorStripLength = (ledsCount - (countOfBatches * range) - (countOfBatches * (countOfColors - 1) * spacing)) / (float)(countOfBatches * countOfColors);
     }
 
     bool Iterate() override;

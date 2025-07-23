@@ -10,16 +10,16 @@ inline int GetRandomValue(int minValue, int maxValue) {
     return rand() % (maxValue - minValue + 1) + minValue;
 }
 
-inline double GetRandomValue(double minValue, double maxValue) {
+inline float GetRandomValue(float minValue, float maxValue) {
     if (minValue >= maxValue) {
         return minValue;
     }
     
-    double range = maxValue - minValue;
-    return (rand() / (double)RAND_MAX) * range + minValue;
+    float range = maxValue - minValue;
+    return (rand() / (float)RAND_MAX) * range + minValue;
 }
 
-inline void PlaceColorInRange(CRGB* array, size_t arraySize, CRGB color, double fromIndex, double toIndex, double offset = 0)
+inline void PlaceColorInRange(CRGB* array, size_t arraySize, CRGB color, float fromIndex, float toIndex, float offset = 0)
 {
     fromIndex += offset;
     toIndex += offset;

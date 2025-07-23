@@ -15,6 +15,8 @@ private:
 
     int preIterationsLeft = 0;
 
+    int skippedIterations = 0;
+
     int maxCountOfNodes = 3;
     int maxCountOfProjectilesPerNode = 10;
     int currentCountOfNodes = 0;
@@ -80,7 +82,7 @@ private:
     };
 
 public:
-    static const int defaultR = 1, defaultG = 2, defaultB = 8, powerBoostThreshold = 15, maxPowerThreshold = 25;
+    static const int defaultR = 1, defaultG = 2, defaultB = 8, powerBoostThreshold = 15, maxPowerThreshold = 25, skipIterations = 3;
 
     AuroraEffect(CRGB *leds, uint16_t ledsCount, uint32_t *params);
 

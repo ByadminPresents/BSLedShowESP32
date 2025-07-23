@@ -1,6 +1,8 @@
 #include "EffectsController.h"
 
 void EController::IterateOverEffects() {
+    unsigned long timestamp = millis();
+
     bool forceSendColors = false;
     if (queuedEffectParams != NULL)
     {
@@ -23,7 +25,6 @@ void EController::IterateOverEffects() {
             isTransitionRunning = true;
         }
     }
-    //unsigned long timestamp = millis();
     if (firstEffect != NULL)
     {
         if (isTransitionRunning)
@@ -82,14 +83,14 @@ void EController::IterateOverEffects() {
             SendColors(secondLEDBuffer);
         }
     }
-
+    delay(max(effectIterationDelayMillis - (int)(millis() - timestamp), 0));
     //Serial.println(effectTransitionStartTimestamp);
 }
 
 bool EController::SendWeightedColors(CRGB *from, CRGB *to)
 {
     bool transitionIsEndFlag = false;
-    double effectTransitionWeight = (millis() - effectTransitionStartTimestamp) / (double)effectTransitionDelayMillis;
+    float effectTransitionWeight = (millis() - effectTransitionStartTimestamp) / (float)effectTransitionDelayMillis;
     if (effectTransitionWeight >= 1)
     {
         effectTransitionWeight = 1;

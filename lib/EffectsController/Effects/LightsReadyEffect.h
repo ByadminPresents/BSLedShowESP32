@@ -10,7 +10,7 @@ class LightsReadyEffect : public Effect
 {
 private:
     
-    static const int centerIndex = 315, leftCorner = 661, rightCorner = 0, thresholdIteration = 60, stopThreshold = 110, brightnessOffset = 40;
+    static const int centerIndex = 315, leftCorner = 661, rightCorner = 0, thresholdIteration = 600, stopThreshold = 930, brightnessOffset = 300;
     bool isBufferInitialized = false;
     int iteration = 0;
 public:

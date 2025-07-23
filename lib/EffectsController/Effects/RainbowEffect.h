@@ -7,15 +7,15 @@
 class RainbowEffect : public Effect
 {
 private:
-    double hue = 0;
+    float hue = 0;
     int hueOffset;
-    double speed;
+    float speed;
     bool oppositeDirection = false;
 public:
     RainbowEffect(CRGB *leds, uint16_t ledsCount, uint32_t *params) : Effect(leds, ledsCount, params) 
     {
         oppositeDirection = (bool)params[0];
-        speed = params[1] / 100.0;
+        speed = params[1] / 500.0;
     };
 
     bool Iterate() override;
